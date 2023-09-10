@@ -1,0 +1,19 @@
+[package]
+name = "solver"
+version = "0.1.0"
+authors = ["Marcos F. Pontes <mfprezende@gmail.com>"]
+license = "MIT"
+edition = "2021"
+categories = ["artificial-intelligence"]
+description = """AI Solver"""
+homepage = "https://github.com/marcosfpr/solver"
+repository = "https://github.com/marcosfpr/solver"
+readme = "README.md"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand = "0.8.5"
+rand_chacha = "0.3.1"
+tabled = "0.14.0"

@@ -1,0 +1,47 @@
+
+# Reference, check to see what all the configs mean (with examples)
+# https://rust-lang.github.io/rustfmt/?version=v1.4.38
+
+# When defining a function, put each argument on its own line
+# Default value: "Tall"
+fn_params_layout = "Vertical"
+
+# Put single-expression functions on a single line
+# Default value: false
+fn_single_line = true
+
+# Break strings into many lines to not exceed max_width
+# Default value: false
+format_strings = true
+
+# Use tab characters for indentation, spaces for alignment
+# Default value: false
+hard_tabs = true
+
+# Separate all imports per-module
+# Default value: Preserve
+imports_granularity = "Module"
+
+# Maximum width of each line.
+# Default value: 100
+max_width = 100
+
+# Unix or Windows line endings
+# Default value: "Auto"
+newline_style = "Unix"
+
+# When defining or creating a struct, align the colons up to X characters
+# Default value: 0
+struct_field_align_threshold = 12
+
+# Don't put struct creation on one line
+# Default value: true
+struct_lit_single_line = false
+
+# Maximum width in the body of a struct lit before falling back to vertical formatting.
+# Default value: 18
+struct_lit_width = 0
+
+# Break comments to fit on the line
+# Default value: false
+wrap_comments = true
