@@ -4,7 +4,7 @@
 //! the absence of a wall and 1's indicate that this position is blocked.
 
 use rand::Rng;
-use tabled::tables::IterTable;
+use tabled::{settings::Style, tables::IterTable};
 
 use self::{
 	coordinates::{Coordinates, Direction},
@@ -127,10 +127,11 @@ impl<const N: usize> Maze<N> {
 		.into_iter()
 		.map(|dir| (dir, pos.next(dir)))
 		.filter(|(_, coord)| {
-			coord.x >= 0
-				&& coord.y >= 0 && coord.x < N as i64
-				&& coord.y < N as i64
-				&& matches!(self.maze[coord.x as usize][coord.y as usize], Ground::Free)
+			if let Some(ground) = self.get(coord) {
+				matches!(ground, Ground::Free)
+			} else {
+				false
+			}
 		})
 		.map(|(dir, _)| dir)
 		.collect()
@@ -165,10 +166,12 @@ impl Path {
 	}
 
 	pub fn walk(
-		&mut self,
+		&self,
 		dir: Direction,
-	) {
-		self.0.push(self.last().next(dir));
+	) -> Self {
+		let mut new_path = self.0.clone();
+		new_path.push(self.last().next(dir));
+		Self(new_path)
 	}
 }
 
@@ -203,7 +206,10 @@ impl<const N: usize> std::fmt::Display for Maze<N> {
 			maze_with_path[coord.x as usize][coord.y as usize] = Ground::Path;
 		}
 
-		let table = IterTable::new(maze_with_path.iter()).to_string();
+		let table = IterTable::new(maze_with_path.iter())
+			.with(Style::modern().remove_horizontal().remove_vertical())
+			.to_string();
+
 		f.write_str(&table)?;
 		Ok(())
 	}

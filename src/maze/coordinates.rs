@@ -106,3 +106,38 @@ impl std::fmt::Display for Direction {
 		})
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::maze::coordinates::Direction;
+
+	use super::Coordinates;
+
+	#[test]
+	fn test_direction_move() {
+		let coordinates = Coordinates::new(1, 1);
+
+		assert_eq!(Coordinates::new(2, 1), coordinates.next(Direction::East));
+		assert_eq!(Coordinates::new(0, 1), coordinates.next(Direction::West));
+		assert_eq!(Coordinates::new(1, 2), coordinates.next(Direction::South));
+		assert_eq!(Coordinates::new(1, 0), coordinates.next(Direction::North));
+		assert_eq!(
+			Coordinates::new(2, 2),
+			coordinates.next(Direction::Southeast)
+		);
+		assert_eq!(
+			Coordinates::new(0, 2),
+			coordinates.next(Direction::Southwest)
+		);
+		assert_eq!(
+			Coordinates::new(2, 0),
+			coordinates.next(Direction::Northeast)
+		);
+		assert_eq!(
+			Coordinates::new(0, 0),
+			coordinates.next(Direction::Northwest)
+		);
+
+		
+	}
+}

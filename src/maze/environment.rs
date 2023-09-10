@@ -21,7 +21,7 @@ pub struct MazeStimuli {
 impl<const N: usize> Environment for Maze<N> {
 	type Error = ();
 
-	type Action = Direction;
+	type Action = Path;
 
 	type Stimuli = MazeStimuli;
 
@@ -35,9 +35,10 @@ impl<const N: usize> Environment for Maze<N> {
 
 	fn update(
 		&mut self,
-		action: Self::Action,
+		new_path: Self::Action,
 	) -> Result<Self::Stimuli, Self::Error> {
-		self.current_path.walk(action);
+		self.current_path = new_path;
+
 		Ok(Self::Stimuli {
 			current_path: self.current_path.clone(),
 			target_position: self.target_position,
