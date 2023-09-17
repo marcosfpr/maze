@@ -15,7 +15,6 @@ pub mod agent;
 pub mod coordinates;
 pub mod environment;
 pub mod generator;
-pub mod solver;
 
 /// Maze consists in a square matrix with obstacles.
 ///

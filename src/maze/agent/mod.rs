@@ -7,6 +7,7 @@ use crate::{agent::Agent, environment::Environment};
 use super::{coordinates::Coordinates, environment::MazeStimuli, Maze, Path};
 
 /// Path finder solver
+#[derive(Debug, Clone)]
 pub struct PathFinder<const N: usize, S: FrontierStrategy> {
 	pub current_solution: Path,
 	goal: Coordinates,
@@ -18,15 +19,28 @@ pub struct PathFinder<const N: usize, S: FrontierStrategy> {
 }
 
 impl<const N: usize, S: FrontierStrategy> PathFinder<N, S> {
-	/// Pop's from the frontier queue
-	pub fn remove_from_frontier(&mut self) -> Option<Path> {
-		self.frontier.pop()
+	fn is_cycle(
+		&self,
+		path: &Path,
+	) -> bool {
+		let last = path.last();
+
+		path.0[0..path.0.len() - 1].iter().any(|elem| *elem == last)
+	}
+
+	fn is_visited(
+		&self,
+		path: &Path,
+	) -> bool {
+		self.visited.contains(&path.last())
 	}
 }
 
 /// How the [`PathFinder`] agent updates
 /// it's frontier.
 pub trait FrontierStrategy {
+	fn remove_from_frontier(frontier: &mut Vec<Path>) -> Path;
+
 	fn update_frontier(
 		frontier: &mut Vec<Path>,
 		candidates: Vec<Path>,
@@ -60,7 +74,7 @@ impl<const N: usize, S: FrontierStrategy> Agent for PathFinder<N, S> {
 		environment: &mut Self::Environment,
 	) -> Result<(), Self::Error> {
 		// Remove from frontier
-		let state = self.remove_from_frontier().ok_or_else(|| ())?;
+		let state = S::remove_from_frontier(&mut self.frontier);
 
 		// Update current solution
 		self.current_solution = state.clone();
@@ -73,7 +87,7 @@ impl<const N: usize, S: FrontierStrategy> Agent for PathFinder<N, S> {
 		for action in stimuli.neighbors.iter() {
 			let neighbor = self.current_solution.walk(*action);
 
-			if !self.visited.contains(&neighbor.last()) {
+			if !self.is_visited(&neighbor) && !self.is_cycle(&neighbor) {
 				viable_neighbors.push(neighbor);
 			}
 		}
@@ -94,6 +108,10 @@ impl<const N: usize, S: FrontierStrategy> Agent for PathFinder<N, S> {
 pub struct RandomFinder;
 
 impl FrontierStrategy for RandomFinder {
+	fn remove_from_frontier(frontier: &mut Vec<Path>) -> Path {
+		frontier.pop().unwrap()
+	}
+
 	fn update_frontier(
 		frontier: &mut Vec<Path>,
 		candidates: Vec<Path>,
@@ -113,8 +131,29 @@ impl FrontierStrategy for BFSFinder {
 		candidates: Vec<Path>,
 	) {
 		for neighbor in candidates {
-			// todo check cycles and visited nodes
 			frontier.push(neighbor.clone());
 		}
+	}
+
+	fn remove_from_frontier(frontier: &mut Vec<Path>) -> Path {
+		frontier.remove(0)
+	}
+}
+
+#[derive(Debug, Clone)]
+pub struct DFSFinder;
+
+impl FrontierStrategy for DFSFinder {
+	fn update_frontier(
+		frontier: &mut Vec<Path>,
+		candidates: Vec<Path>,
+	) {
+		for neighbor in candidates {
+			frontier.push(neighbor.clone());
+		}
+	}
+
+	fn remove_from_frontier(frontier: &mut Vec<Path>) -> Path {
+		frontier.pop().unwrap()
 	}
 }

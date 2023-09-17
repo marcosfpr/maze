@@ -23,4 +23,7 @@ pub trait Environment {
 		&mut self,
 		action: Self::Action,
 	) -> Result<Self::Stimuli, Self::Error>;
+
+	/// Render the environment state
+	fn render(&self);
 }
