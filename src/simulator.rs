@@ -47,7 +47,7 @@ mod tests {
 	use crate::{
 		agent::Agent,
 		maze::{
-			agent::{BFSFinder, PathFinder},
+			agent::{greedy::GreedyFinder, PathFinder},
 			coordinates::Coordinates,
 			Maze,
 		},
@@ -58,7 +58,7 @@ mod tests {
 	fn test_maze_creation() {
 		let maze = Maze::<20>::new(Coordinates::new(0, 0), Coordinates::new(19, 19), 5);
 
-		let mut simulator = Simulator::new(PathFinder::<20, BFSFinder>::new(&maze), maze);
+		let mut simulator = Simulator::new(PathFinder::<20, GreedyFinder>::new(&maze), maze);
 
 		let _ = simulator.simulate();
 	}

@@ -39,6 +39,14 @@ impl Coordinates {
 				},
 		}
 	}
+
+	/// Calculates the euclidean distance between two points.
+	pub fn euclidean_dist(
+		&self,
+		other: &Self,
+	) -> f32 {
+		f32::sqrt((self.x - other.x).pow(2) as f32 + (self.y - other.y).pow(2) as f32)
+	}
 }
 
 /// The four cardinal directions
@@ -137,7 +145,5 @@ mod tests {
 			Coordinates::new(0, 0),
 			coordinates.next(Direction::Northwest)
 		);
-
-		
 	}
 }

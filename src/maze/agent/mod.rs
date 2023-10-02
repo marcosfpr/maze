@@ -1,4 +1,4 @@
-use std::{collections::HashSet, marker::PhantomData};
+use std::collections::HashSet;
 
 use rand::seq::SliceRandom;
 
@@ -6,19 +6,38 @@ use crate::{agent::Agent, environment::Environment};
 
 use super::{coordinates::Coordinates, environment::MazeStimuli, Maze, Path};
 
+pub mod graph_based;
+pub mod greedy;
+
 /// Path finder solver
 #[derive(Debug, Clone)]
-pub struct PathFinder<const N: usize, S: FrontierStrategy> {
+pub struct PathFinder<const N: usize, F: FrontierManager> {
 	pub current_solution: Path,
 	goal: Coordinates,
 
-	frontier: Vec<Path>,
+	frontier: F,
 	visited: HashSet<Coordinates>,
-
-	strategy: PhantomData<S>,
 }
 
-impl<const N: usize, S: FrontierStrategy> PathFinder<N, S> {
+/// How the [`PathFinder`] agent updates
+/// it's frontier.
+pub trait FrontierManager {
+	fn init(
+		path: Path,
+		goal: Coordinates,
+	) -> Self;
+
+	fn is_empty(&self) -> bool;
+
+	fn pop(&mut self) -> Path;
+
+	fn choose(
+		&mut self,
+		candidates: Vec<Path>,
+	);
+}
+
+impl<const N: usize, F: FrontierManager> PathFinder<N, F> {
 	fn is_cycle(
 		&self,
 		path: &Path,
@@ -36,18 +55,7 @@ impl<const N: usize, S: FrontierStrategy> PathFinder<N, S> {
 	}
 }
 
-/// How the [`PathFinder`] agent updates
-/// it's frontier.
-pub trait FrontierStrategy {
-	fn remove_from_frontier(frontier: &mut Vec<Path>) -> Path;
-
-	fn update_frontier(
-		frontier: &mut Vec<Path>,
-		candidates: Vec<Path>,
-	);
-}
-
-impl<const N: usize, S: FrontierStrategy> Agent for PathFinder<N, S> {
+impl<const N: usize, F: FrontierManager> Agent for PathFinder<N, F> {
 	type Error = ();
 
 	type Action = Path;
@@ -63,9 +71,8 @@ impl<const N: usize, S: FrontierStrategy> Agent for PathFinder<N, S> {
 		Self {
 			current_solution: initial_stimuli.current_path,
 			goal: initial_stimuli.target_position,
-			frontier: vec![initial_path.clone()],
+			frontier: F::init(initial_path, initial_stimuli.target_position),
 			visited: HashSet::new(),
-			strategy: PhantomData,
 		}
 	}
 
@@ -74,7 +81,7 @@ impl<const N: usize, S: FrontierStrategy> Agent for PathFinder<N, S> {
 		environment: &mut Self::Environment,
 	) -> Result<(), Self::Error> {
 		// Remove from frontier
-		let state = S::remove_from_frontier(&mut self.frontier);
+		let state = self.frontier.pop();
 
 		// Update current solution
 		self.current_solution = state.clone();
@@ -94,7 +101,7 @@ impl<const N: usize, S: FrontierStrategy> Agent for PathFinder<N, S> {
 
 		self.visited.insert(self.current_solution.last());
 
-		S::update_frontier(&mut self.frontier, viable_neighbors);
+		self.frontier.choose(viable_neighbors);
 
 		Ok(())
 	}
@@ -105,55 +112,30 @@ impl<const N: usize, S: FrontierStrategy> Agent for PathFinder<N, S> {
 }
 
 #[derive(Debug, Clone)]
-pub struct RandomFinder;
+pub struct RandomFinder(Vec<Path>);
 
-impl FrontierStrategy for RandomFinder {
-	fn remove_from_frontier(frontier: &mut Vec<Path>) -> Path {
-		frontier.pop().unwrap()
+impl FrontierManager for RandomFinder {
+	fn init(
+		path: Path,
+		_goal: Coordinates,
+	) -> Self {
+		Self(vec![path])
 	}
 
-	fn update_frontier(
-		frontier: &mut Vec<Path>,
+	fn pop(&mut self) -> Path {
+		self.0.pop().unwrap()
+	}
+
+	fn choose(
+		&mut self,
 		candidates: Vec<Path>,
 	) {
 		for path in candidates.choose_multiple(&mut rand::thread_rng(), candidates.len()) {
-			frontier.insert(0, path.clone());
-		}
-	}
-}
-
-#[derive(Debug, Clone)]
-pub struct BFSFinder;
-
-impl FrontierStrategy for BFSFinder {
-	fn update_frontier(
-		frontier: &mut Vec<Path>,
-		candidates: Vec<Path>,
-	) {
-		for neighbor in candidates {
-			frontier.push(neighbor.clone());
+			self.0.insert(0, path.clone());
 		}
 	}
 
-	fn remove_from_frontier(frontier: &mut Vec<Path>) -> Path {
-		frontier.remove(0)
-	}
-}
-
-#[derive(Debug, Clone)]
-pub struct DFSFinder;
-
-impl FrontierStrategy for DFSFinder {
-	fn update_frontier(
-		frontier: &mut Vec<Path>,
-		candidates: Vec<Path>,
-	) {
-		for neighbor in candidates {
-			frontier.push(neighbor.clone());
-		}
-	}
-
-	fn remove_from_frontier(frontier: &mut Vec<Path>) -> Path {
-		frontier.pop().unwrap()
+	fn is_empty(&self) -> bool {
+		self.0.is_empty()
 	}
 }
