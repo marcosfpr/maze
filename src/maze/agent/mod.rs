@@ -12,130 +12,108 @@ pub mod greedy;
 /// Path finder solver
 #[derive(Debug, Clone)]
 pub struct PathFinder<const N: usize, F: FrontierManager> {
-	pub current_solution: Path,
-	goal: Coordinates,
-
-	frontier: F,
-	visited: HashSet<Coordinates>,
+    pub current_solution: Path,
+    goal: Coordinates,
+    frontier: F,
+    visited: HashSet<Coordinates>,
 }
 
 /// How the [`PathFinder`] agent updates
 /// it's frontier.
 pub trait FrontierManager {
-	fn init(
-		path: Path,
-		goal: Coordinates,
-	) -> Self;
+    fn init(path: Path, goal: Coordinates) -> Self;
 
-	fn is_empty(&self) -> bool;
+    fn is_empty(&self) -> bool;
 
-	fn pop(&mut self) -> Path;
+    fn pop(&mut self) -> Path;
 
-	fn choose(
-		&mut self,
-		candidates: Vec<Path>,
-	);
+    fn choose(&mut self, candidates: Vec<Path>);
 }
 
 impl<const N: usize, F: FrontierManager> PathFinder<N, F> {
-	fn is_cycle(
-		&self,
-		path: &Path,
-	) -> bool {
-		let last = path.last();
+    fn is_cycle(&self, path: &Path) -> bool {
+        let last = path.last();
 
-		path.0[0..path.0.len() - 1].iter().any(|elem| *elem == last)
-	}
+        path.0[0..path.0.len() - 1].iter().any(|elem| *elem == last)
+    }
 
-	fn is_visited(
-		&self,
-		path: &Path,
-	) -> bool {
-		self.visited.contains(&path.last())
-	}
+    fn is_visited(&self, path: &Path) -> bool {
+        self.visited.contains(&path.last())
+    }
 }
 
 impl<const N: usize, F: FrontierManager> Agent for PathFinder<N, F> {
-	type Error = ();
+    type Error = ();
 
-	type Action = Path;
+    type Action = Path;
 
-	type Stimuli = MazeStimuli;
+    type Stimuli = MazeStimuli;
 
-	type Environment = Maze<N>;
+    type Environment = Maze<N>;
 
-	fn new(environment: &Self::Environment) -> Self {
-		let initial_stimuli = environment.initial_stimuli();
-		let initial_path = initial_stimuli.current_path.clone();
+    fn new(environment: &Self::Environment) -> Self {
+        let initial_stimuli = environment.initial_stimuli();
+        let initial_path = initial_stimuli.current_path.clone();
 
-		Self {
-			current_solution: initial_stimuli.current_path,
-			goal: initial_stimuli.target_position,
-			frontier: F::init(initial_path, initial_stimuli.target_position),
-			visited: HashSet::new(),
-		}
-	}
+        Self {
+            current_solution: initial_stimuli.current_path,
+            goal: initial_stimuli.target_position,
+            frontier: F::init(initial_path, initial_stimuli.target_position),
+            visited: HashSet::new(),
+        }
+    }
 
-	fn act(
-		&mut self,
-		environment: &mut Self::Environment,
-	) -> Result<(), Self::Error> {
-		// Remove from frontier
-		let state = self.frontier.pop();
+    fn act(&mut self, environment: &mut Self::Environment) -> Result<(), Self::Error> {
+        // Remove from frontier
+        let state = self.frontier.pop();
 
-		// Update current solution
-		self.current_solution = state.clone();
+        // Update current solution
+        self.current_solution = state.clone();
 
-		// Act in the environment
-		let stimuli = environment.update(self.current_solution.clone())?;
+        // Act in the environment
+        let stimuli = environment.update(self.current_solution.clone())?;
 
-		// Visit neighbors of the last element of path
-		let mut viable_neighbors = Vec::new();
-		for action in stimuli.neighbors.iter() {
-			let neighbor = self.current_solution.walk(*action);
+        // Visit neighbors of the last element of path
+        let mut viable_neighbors = Vec::new();
+        for action in stimuli.neighbors.iter() {
+            let neighbor = self.current_solution.walk(*action);
 
-			if !self.is_visited(&neighbor) && !self.is_cycle(&neighbor) {
-				viable_neighbors.push(neighbor);
-			}
-		}
+            if !self.is_visited(&neighbor) && !self.is_cycle(&neighbor) {
+                viable_neighbors.push(neighbor);
+            }
+        }
 
-		self.visited.insert(self.current_solution.last());
+        self.visited.insert(self.current_solution.last());
 
-		self.frontier.choose(viable_neighbors);
+        self.frontier.choose(viable_neighbors);
 
-		Ok(())
-	}
+        Ok(())
+    }
 
-	fn should_stop(&self) -> bool {
-		self.current_solution.last() == self.goal || self.frontier.is_empty()
-	}
+    fn should_stop(&self) -> bool {
+        self.current_solution.last() == self.goal || self.frontier.is_empty()
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct RandomFinder(Vec<Path>);
 
 impl FrontierManager for RandomFinder {
-	fn init(
-		path: Path,
-		_goal: Coordinates,
-	) -> Self {
-		Self(vec![path])
-	}
+    fn init(path: Path, _goal: Coordinates) -> Self {
+        Self(vec![path])
+    }
 
-	fn pop(&mut self) -> Path {
-		self.0.pop().unwrap()
-	}
+    fn pop(&mut self) -> Path {
+        self.0.pop().unwrap()
+    }
 
-	fn choose(
-		&mut self,
-		candidates: Vec<Path>,
-	) {
-		for path in candidates.choose_multiple(&mut rand::thread_rng(), candidates.len()) {
-			self.0.insert(0, path.clone());
-		}
-	}
+    fn choose(&mut self, candidates: Vec<Path>) {
+        for path in candidates.choose_multiple(&mut rand::thread_rng(), candidates.len()) {
+            self.0.insert(0, path.clone());
+        }
+    }
 
-	fn is_empty(&self) -> bool {
-		self.0.is_empty()
-	}
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 }
