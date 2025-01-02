@@ -1,37 +1,46 @@
 use std::fmt::Debug;
 
 use crate::agent::Agent;
-use crate::environment::Environment;
+use crate::render::Renderer;
 
-pub struct Simulator<A>
+pub struct Simulator<A, R>
 where
     A: Agent,
+    R: Renderer<A::Environment>,
 {
     agent: A,
+    renderer: R,
     environment: A::Environment,
 }
 
-impl<A> Simulator<A>
+impl<A, R> Simulator<A, R>
 where
     A: Agent + Debug,
+    R: Renderer<A::Environment>,
 {
-    pub fn new(agent: A, environment: A::Environment) -> Self {
-        Self { environment, agent }
+    pub fn new(agent: A, renderer: R, environment: A::Environment) -> Self {
+        Self {
+            environment,
+            agent,
+            renderer,
+        }
     }
 
     pub fn simulate(&mut self) -> Result<(), A::Error> {
-        eprintln!("Starting acting with agent: {:?}", self.agent);
+        self.renderer.setup();
 
-        self.environment.render();
+        eprintln!("Starting acting with agent: {:?}", self.agent);
+        self.renderer.render(&self.environment);
 
         while !self.agent.should_stop() {
             self.agent.act(&mut self.environment)?;
-            self.environment.render();
+            self.renderer.render(&self.environment);
         }
 
         eprintln!("Solution found:");
-        self.environment.render();
+        self.renderer.render(&self.environment);
 
+        self.renderer.teardown();
         Ok(())
     }
 }
