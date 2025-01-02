@@ -6,6 +6,7 @@ use crate::{agent::Agent, environment::Environment};
 
 use super::{coordinates::Coordinates, environment::MazeStimuli, Maze, Path};
 
+pub mod astar;
 pub mod graph_based;
 pub mod greedy;
 

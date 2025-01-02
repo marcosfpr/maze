@@ -1,8 +1,7 @@
 use std::io::stdout;
 
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
-use crossterm::ExecutableCommand;
 use solver::agent::Agent;
+use solver::maze::agent::astar::AStarFinder;
 use solver::maze::agent::greedy::GreedyFinder;
 use solver::maze::agent::PathFinder;
 use solver::maze::coordinates::Coordinates;
@@ -11,8 +10,15 @@ use solver::maze::Maze;
 use solver::simulator::Simulator;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let maze = Maze::<20>::new(Coordinates::new(0, 0), Coordinates::new(19, 19), 5);
-    let path_finder = PathFinder::<20, GreedyFinder>::new(&maze);
+    const N: usize = 50;
+    
+    let density = 10;
+
+    let start = Coordinates::new(0, 0);
+    let goal = Coordinates::new(49, 49);
+
+    let maze = Maze::<N>::new(start, goal, density);
+    let path_finder = PathFinder::<N, GreedyFinder>::new(&maze);
 
     let renderer  = DefaultRenderer::new(stdout());
 

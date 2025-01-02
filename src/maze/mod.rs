@@ -153,6 +153,11 @@ impl Path {
         *self.0.last().unwrap()
     }
 
+
+    pub fn first(&self) -> Coordinates {
+        *self.0.first().unwrap()
+    }
+
     pub fn walk(&self, dir: Direction) -> Self {
         let mut new_path = self.0.clone();
         new_path.push(self.last().next(dir));
