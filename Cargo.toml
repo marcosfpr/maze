@@ -1,13 +1,13 @@
 [package]
-name = "solver"
+name = "maze"
 version = "0.1.0"
 authors = ["Marcos F. Pontes <mfprezende@gmail.com>"]
 license = "MIT"
 edition = "2021"
 categories = ["artificial-intelligence"]
-description = """AI Solver"""
-homepage = "https://github.com/marcosfpr/solver"
-repository = "https://github.com/marcosfpr/solver"
+description = """AI Maze Solver"""
+homepage = "https://github.com/marcosfpr/maze"
+repository = "https://github.com/marcosfpr/maze"
 readme = "README.md"
 
 
